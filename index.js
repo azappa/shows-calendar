@@ -1,9 +1,8 @@
-const fs = require('fs');
-const path = require('path');
 const { prompt } = require('enquirer');
-const moment = require('moment');
 const axios = require('axios');
+const moment = require('moment');
 const isEmpty = require('lodash/isEmpty');
+const sortBy = require('lodash/sortBy');
 const _c = require('./consts');
 
 const _req = async (url, method) => {
@@ -21,8 +20,18 @@ const _req = async (url, method) => {
   }
 };
 
-const _search = async (q) => {
-  const _url = `${_c.API_BASE_URL}${_c.API_SEARCH_PATH}${_c.API_SHOWS_PATH}?q=${q}`;
+const _searchShows = async (q) => {
+  const _url = _c.API_SEARCH_SHOWS_PATH(q);
+  console.log({ _url });
+  try {
+    return await _req(_url, 'GET');
+  } catch (e) {
+    return e;
+  }
+};
+
+const _getShowEpisodes = async (id) => {
+  const _url = _c.API_GET_EPISODES_PATH(id);
   console.log({ _url });
   try {
     return await _req(_url, 'GET');
@@ -45,19 +54,25 @@ const _search = async (q) => {
       return;
     }
 
-    const results = await _search(userQuery.q);
+    const results = await _searchShows(userQuery.q);
 
     const { queryResults } = await prompt({
       type: 'select',
       name: 'queryResults',
-      message: 'Pick up a template',
+      message: 'Choose the serie',
       choices: results.map((r) => _c.parseShow(r)),
       limit: results.length,
       result() {
         return this.selected;
       },
     });
-    console.log(queryResults);
+
+    const { id: chosenId } = queryResults;
+
+    const episodes = await _getShowEpisodes(chosenId);
+    const mappedEpisodes = episodes.map((e) => _c.parseEpisode(e));
+    const sortedEpisodes = sortBy(mappedEpisodes, ['season', 'number']);
+    console.log(sortedEpisodes);
   } catch (e) {
     console.log('got error', e);
   }
