@@ -6,6 +6,11 @@ const sortBy = require('lodash/sortBy');
 const { Parser } = require('json2csv');
 const _c = require('./consts');
 
+
+const handleError = (e) => {
+  throw e;
+};
+
 const _jsonToCsv = (json) => {
   const fields = _c.CSV_DICT.map((f) => f.label);
 
@@ -25,7 +30,7 @@ const _req = async (url, method) => {
         throw new Error({ data: 'No method allowed', error: true });
     }
   } catch (e) {
-    throw e;
+    handleError(e);
   }
 };
 
@@ -35,7 +40,7 @@ const _searchShows = async (q) => {
   try {
     return await _req(_url, 'GET');
   } catch (e) {
-    throw e;
+    handleError(e);
   }
 };
 
@@ -45,7 +50,7 @@ const _getShowEpisodes = async (id) => {
   try {
     return await _req(_url, 'GET');
   } catch (e) {
-    throw e;
+    handleError(e);
   }
 };
 
@@ -87,6 +92,6 @@ const _getShowEpisodes = async (id) => {
     const _a = _jsonToCsv(episodesToCsv);
     console.log({ _a });
   } catch (e) {
-    console.log('got error', e);
+    console.log('got error', { code: e.code });
   }
 })();
