@@ -52,3 +52,6 @@ typings/
 # dotenv environment variables file
 .env
 .env.test
+
+# app generated files
+out/*

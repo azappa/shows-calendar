@@ -3,7 +3,11 @@ const axios = require('axios');
 const moment = require('moment');
 const isEmpty = require('lodash/isEmpty');
 const sortBy = require('lodash/sortBy');
+const kebabCase = require('lodash/kebabCase');
 const { Parser } = require('json2csv');
+const Vinyl = require('vinyl');
+const mkdirp = require('mkdirp');
+const fs = require('fs');
 const _c = require('./consts');
 
 
@@ -36,7 +40,6 @@ const _req = async (url, method) => {
 
 const _searchShows = async (q) => {
   const _url = _c.API_SEARCH_SHOWS_PATH(q);
-  console.log({ _url });
   try {
     return await _req(_url, 'GET');
   } catch (e) {
@@ -46,7 +49,6 @@ const _searchShows = async (q) => {
 
 const _getShowEpisodes = async (id) => {
   const _url = _c.API_GET_EPISODES_PATH(id);
-  console.log({ _url });
   try {
     return await _req(_url, 'GET');
   } catch (e) {
@@ -81,17 +83,26 @@ const _getShowEpisodes = async (id) => {
       },
     });
 
-    const { id: chosenId } = queryResults;
+    const { id: chosenId, name: chosenName } = queryResults;
 
     const episodes = await _getShowEpisodes(chosenId);
     const mappedEpisodes = episodes.map((e) => _c.parseEpisode(e));
     const sortedEpisodes = sortBy(mappedEpisodes, ['season', 'number']);
-    const episodesToCsv = sortedEpisodes.map((e) => _c.episodeToCsv(e));
-
-    console.log({ episodesToCsv });
+    const episodesToCsv = sortedEpisodes.map((e, index) => {
+      const calendarDay = moment(new Date()).add(index, 'days').format('YYYY/MM/DD');
+      return _c.episodeToCsv({ ...e, calendarDay, serieName: chosenName });
+    });
     const _a = _jsonToCsv(episodesToCsv);
-    console.log({ _a });
+    const csvFile = new Vinyl({
+      contents: Buffer.from(_a),
+      path: `out/${kebabCase(chosenName)}.csv`,
+    });
+
+    mkdirp.sync(csvFile.dirname);
+    fs.writeFileSync(csvFile.path, csvFile.contents, 'utf-8');
+
+    console.info('All done!');
   } catch (e) {
-    console.log('got error', { code: e.code });
+    console.error('got error', e);
   }
 })();

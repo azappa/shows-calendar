@@ -1,5 +1,4 @@
 const pick = require('lodash/pick');
-const moment = require('moment');
 
 const API_BASE_URL = 'http://api.tvmaze.com';
 
@@ -73,17 +72,17 @@ module.exports.parseEpisode = (e) => {
 
 module.exports.episodeToCsv = (e) => {
   const {
-    name, season, number, summary, runtime,
+    name, season, number, summary, runtime, calendarDay, serieName,
   } = e;
   return {
-    Subject: `Watching ${name} (S${season}E${number})`,
-    ['Start Date']: moment.now(),
-    ['Start Time']: `01:00 PM`,
-    ['End Date']: moment.now(),
-    ['End Time']: `02:00 PM`,
-    ['All Day Event']: `False`,
+    Subject: `Watching ${serieName} - ${name} (S${season}E${number})`,
+    'Start Date': calendarDay,
+    'Start Time': '01:00 PM',
+    'End Date': calendarDay,
+    'End Time': '02:00 PM',
+    'All Day Event': 'False',
     Description: `Episode summary: ${summary}`,
-    Location: `here`,
-    Private: `True`,
+    Location: '',
+    Private: 'True',
   };
 };
